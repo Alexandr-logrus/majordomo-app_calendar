@@ -298,21 +298,17 @@ function usual(&$out) {
    foreach($events_past as $k=>$v) {
     $days=abs($v['AGE']);
     if (floor($days/10)==1) $days=$daymorph[0];
-    else $days=$daymorph[$days-floor($days/10)*10];
+      else $days=$daymorph[$days-floor($days/10)*10];
     $v['DAYS']=$days;
     $calendar_categories[$k1]['EVENTS_PAST'][]=$v;
    }
    $out['EVENTS_PAST']=$events_past;
   }
 
-  if (defined('TEMP_APP_CALENDAR_SOONLIMIT')) {
-    $how_soon=TEMP_APP_CALENDAR_SOONLIMIT;
-  } else {
-    $how_soon=SETTINGS_APP_CALENDAR_SOONLIMIT;
-  }
+  $how_soon=SETTINGS_APP_CALENDAR_SOONLIMIT;
   $events_soon=SQLSelect("SELECT *, (TO_DAYS(DUE)-TO_DAYS(NOW())) as AGE FROM calendar_events WHERE IS_TASK=0 AND (TO_DAYS(DUE)>TO_DAYS(NOW()) AND (TO_DAYS(DUE)-TO_DAYS(NOW())<=".(int)$how_soon.")) and CALENDAR_CATEGORY_ID=" . $v1['ID'] . " ORDER BY AGE");
  
-  $tasks_soon=SQLSelect("SELECT *, (TO_DAYS(DUE)-TO_DAYS(NOW())) as AGE FROM calendar_events WHERE IS_TASK=1 AND IS_DONE=0 AND ((TO_DAYS(DUE)>TO_DAYS(NOW()) AND (TO_DAYS(DUE)-TO_DAYS(NOW())<=".(int)$how_soon.")) OR (IS_NODATE=1)) and CALENDAR_CATEGORY_ID=" . $v1['ID'] . " ORDER BY AGE");
+  $tasks_soon=SQLSelect("SELECT *, (TO_DAYS(DUE)-TO_DAYS(NOW())) as AGE FROM calendar_events WHERE IS_TASK=1 AND IS_DONE=0 AND (TO_DAYS(DUE)>TO_DAYS(NOW()) OR (IS_NODATE=1)) and CALENDAR_CATEGORY_ID=" . $v1['ID'] . " ORDER BY AGE");
   if ($tasks_soon) {
    foreach($tasks_soon as $k=>$v) {
     $events_soon[]=$v;
@@ -341,7 +337,7 @@ function usual(&$out) {
      if ($ev['AGE']) {
       $days=abs($ev['AGE']);
       if (floor($days/10)==1) $days=$daymorph[0];
-      else $days=$daymorph[$days-floor($days/10)*10];
+       else $days=$daymorph[$days-floor($days/10)*10];
       $ev['DAYS']=$days;   
      } 
      $calendar_categories[$k1]['EVENTS_SOON'][]=$ev;
@@ -350,6 +346,11 @@ function usual(&$out) {
    }
   // $out['EVENTS_SOON']=$new_events;
   }
+
+  $events_pastplan=SQLSelect("SELECT *, (TO_DAYS(DUE)-TO_DAYS(NOW())) as AGE,calendar_categories.TITLE as CATEGORY FROM calendar_events LEFT JOIN calendar_categories ON calendar_events.CALENDAR_CATEGORY_ID=calendar_categories.ID WHERE (TO_DAYS(DUE)>TO_DAYS(NOW()) AND (TO_DAYS(DUE)-TO_DAYS(NOW())<=3) AND IS_DONE=0) ORDER BY calendar_categories.TITLE,AGE");
+  if ($events_pastplan) {
+   $out['EVENTS_PASTPLAN']=$events_pastplan;
+  }  
 
   if (empty($calendar_categories[$k1]['EVENTS_PAST']) and empty($calendar_categories[$k1]['EVENTS_SOON']) and empty ($calendar_categories[$k1]['RECENTLY_DONE'])) {
    $calendar_categories[$k1]['REC_COUNT']=0;
